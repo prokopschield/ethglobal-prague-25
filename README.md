@@ -43,6 +43,21 @@ Built for **ETH Prague 2025** hackathon using Blockscout's API and Google's late
    bun run chat
    ```
 
+### 🐛 Debug Mode
+
+To enable verbose debug logging for troubleshooting:
+
+```bash
+DEBUG=true bun run chat
+```
+
+This will show detailed logs of:
+- API calls and responses
+- Function executions
+- AI processing steps
+- ENS resolution attempts
+- Error details
+
 ## 💬 Usage Examples
 
 Once the chatbot starts, you can ask questions like:
