@@ -139,7 +139,6 @@ async function getAddressInfo(address: string) {
         return {
             address: data.hash,
             balance: data.coin_balance || '0',
-            transactionCount: data.transactions_count || 0,
             type: data.is_contract ? 'Contract' : 'EOA (Externally Owned Account)',
             verified: data.is_verified || false
         };
@@ -217,8 +216,8 @@ async function getTokenInfo(tokenAddress: string) {
             symbol: data.symbol,
             decimals: data.decimals,
             totalSupply: data.total_supply,
-            holderCount: data.holder_count,
-            transferCount: data.transfer_count,
+            holderCount: data.holders,
+            transferCount: 'N/A',
             type: data.type
         };
     } catch (error) {
@@ -246,7 +245,7 @@ async function getTransactionInfo(txHash: string) {
             gasLimit: data.gas_limit,
             gasPrice: data.gas_price,
             status: data.status,
-            blockNumber: data.block,
+            blockNumber: data.block_number,
             timestamp: data.timestamp,
             method: data.method,
             fee: data.fee
@@ -295,7 +294,6 @@ async function searchBlockchain(query: string) {
         return {
             query,
             results: data.items || [],
-            redirectUrl: data.redirect_url
         };
     } catch (error) {
         return `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
@@ -315,7 +313,6 @@ async function getNetworkStats() {
             totalBlocks: data.total_blocks,
             totalTransactions: data.total_transactions,
             totalAddresses: data.total_addresses,
-            totalTokens: data.total_tokens,
             averageBlockTime: data.average_block_time,
             networkUtilization: data.network_utilization_percentage
         };
