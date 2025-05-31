@@ -15,13 +15,13 @@ const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const functionDeclarations: FunctionDeclaration[] = [
     {
         name: 'getAddressInfo',
-        description: 'Get basic information about an Ethereum address including balance, transaction count, and type',
+        description: 'Get basic information about an Ethereum address (0x...) including balance, transaction count, and type. Note: If you have an ENS name like vitalik.eth, use searchBlockchain first to resolve it to an address.',
         parameters: {
             type: Type.OBJECT,
             properties: {
                 address: {
                     type: Type.STRING,
-                    description: 'Ethereum address (0x...)'
+                    description: 'Ethereum address in 0x format (40 characters after 0x)'
                 }
             },
             required: ['address']
@@ -29,17 +29,17 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
     {
         name: 'getAddressTransactions',
-        description: 'Get recent transactions for an Ethereum address',
+        description: 'Get recent transactions for an Ethereum address (0x...). If you have an ENS name, use searchBlockchain first to resolve it.',
         parameters: {
             type: Type.OBJECT,
             properties: {
                 address: {
                     type: Type.STRING,
-                    description: 'Ethereum address (0x...)'
+                    description: 'Ethereum address in 0x format (40 characters after 0x)'
                 },
                 limit: {
                     type: Type.NUMBER,
-                    description: 'Number of transactions to retrieve (default: 10)'
+                    description: 'Number of transactions to retrieve (default: 10, max: 50)'
                 }
             },
             required: ['address']
@@ -47,13 +47,13 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
     {
         name: 'getAddressTokenBalances',
-        description: 'Get token balances for an Ethereum address',
+        description: 'Get all token balances for an Ethereum address (0x...). Shows ERC-20, ERC-721, and other token holdings. If you have an ENS name, use searchBlockchain first.',
         parameters: {
             type: Type.OBJECT,
             properties: {
                 address: {
                     type: Type.STRING,
-                    description: 'Ethereum address (0x...)'
+                    description: 'Ethereum address in 0x format (40 characters after 0x)'
                 }
             },
             required: ['address']
@@ -61,13 +61,13 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
     {
         name: 'getTokenInfo',
-        description: 'Get information about a specific token by its contract address',
+        description: 'Get detailed information about a specific token by its contract address, including name, symbol, total supply, and holder count.',
         parameters: {
             type: Type.OBJECT,
             properties: {
                 tokenAddress: {
                     type: Type.STRING,
-                    description: 'Token contract address (0x...)'
+                    description: 'Token contract address in 0x format'
                 }
             },
             required: ['tokenAddress']
@@ -75,13 +75,13 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
     {
         name: 'getTransactionInfo',
-        description: 'Get detailed information about a specific transaction',
+        description: 'Get detailed information about a specific transaction including gas usage, fees, method called, and status.',
         parameters: {
             type: Type.OBJECT,
             properties: {
                 txHash: {
                     type: Type.STRING,
-                    description: 'Transaction hash (0x...)'
+                    description: 'Transaction hash in 0x format (64 characters after 0x)'
                 }
             },
             required: ['txHash']
@@ -89,26 +89,26 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
     {
         name: 'getLatestBlocks',
-        description: 'Get information about the latest blocks on the blockchain',
+        description: 'Get information about the most recent blocks on the Ethereum blockchain, including block numbers, timestamps, gas usage, and miner information.',
         parameters: {
             type: Type.OBJECT,
             properties: {
                 count: {
                     type: Type.NUMBER,
-                    description: 'Number of latest blocks to retrieve (default: 5)'
+                    description: 'Number of latest blocks to retrieve (default: 5, max: 50)'
                 }
             }
         }
     },
     {
         name: 'searchBlockchain',
-        description: 'Search for addresses, transactions, blocks, or tokens',
+        description: 'Universal search function that can find and resolve: ENS names (like vitalik.eth), addresses, transaction hashes, block numbers, token names/symbols, and more. This is the best function to use when you have ENS names or need to find something by name or partial identifier.',
         parameters: {
             type: Type.OBJECT,
             properties: {
                 query: {
                     type: Type.STRING,
-                    description: 'Search query (address, tx hash, block number, token name, etc.)'
+                    description: 'Search query - can be ENS names (vitalik.eth), partial addresses, token names (USDC), transaction hashes, block numbers, or any blockchain identifier'
                 }
             },
             required: ['query']
@@ -116,7 +116,7 @@ const functionDeclarations: FunctionDeclaration[] = [
     },
     {
         name: 'getNetworkStats',
-        description: 'Get overall network statistics and metrics',
+        description: 'Get overall Ethereum network statistics including total blocks, transactions, addresses, average block time, and network utilization.',
         parameters: {
             type: Type.OBJECT,
             properties: {}
@@ -291,9 +291,50 @@ async function searchBlockchain(query: string) {
         }
         
         const data = response.data;
+        const results = data.items || [];
+        
+        // Process and enhance search results
+        const processedResults = results.map((item: any) => {
+            const result: any = {
+                type: item.type,
+                name: item.name || 'Unknown'
+            };
+            
+            // Handle different types of search results
+            if (item.type === 'address' && item.address) {
+                result.address = item.address;
+                result.isContract = item.is_smart_contract_verified;
+                result.url = item.address_url;
+                // If this was an ENS search, this is the resolved address
+                if (query.endsWith('.eth')) {
+                    result.ensResolution = `${query} resolves to ${item.address}`;
+                }
+            } else if (item.type === 'token' && item.address) {
+                result.address = item.address;
+                result.symbol = item.symbol;
+                result.tokenType = item.token_type;
+                result.url = item.token_url;
+            } else if (item.type === 'transaction' && item.tx_hash) {
+                result.hash = item.tx_hash;
+                result.url = item.url;
+            } else if (item.type === 'block' && item.block_number) {
+                result.blockNumber = item.block_number;
+                result.url = item.url;
+            }
+            
+            return result;
+        });
+        
+        // Find resolved address for ENS lookups
+        const firstAddressResult = results.find((item: any) => item.type === 'address' && (item as any).address);
+        const resolvedAddress = firstAddressResult && query.endsWith('.eth') ? (firstAddressResult as any).address : null;
+        
         return {
             query,
-            results: data.items || [],
+            resultsCount: results.length,
+            results: processedResults,
+            // Provide a direct address if this was an ENS lookup
+            resolvedAddress
         };
     } catch (error) {
         return `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`;

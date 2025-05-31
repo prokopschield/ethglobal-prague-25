@@ -48,43 +48,44 @@ Built for **ETH Prague 2025** hackathon using Blockscout's API and Google's late
 Once the chatbot starts, you can ask questions like:
 
 ### 🏦 Address Queries
-- "What's the balance of vitalik.eth?"
+- **"What's the balance of vitalik.eth?"** ← Now works with ENS names!
 - "Show me info about 0x1234567890123456789012345678901234567890"
-- "Get token balances for that address"
+- "Get token balances for vitalik.eth"
 
 ### 📝 Transaction Queries  
-- "Show me recent transactions for 0x1234..."
+- "Show me recent transactions for vitalik.eth"
 - "What happened in transaction 0xabcd...?"
 - "Get details for tx 0x1234567890123456789012345678901234567890123456789012345678901234"
 
 ### 🪙 Token Information
 - "Tell me about USDC token"
+- "Search for Chainlink token"
 - "What's the info for token contract 0xA0b86a33E6417efF8BC19FdDa0C19Bb82E9d5b6"
-- "Search for Ethereum tokens"
 
 ### 📦 Block Data
 - "Show me the latest blocks"
 - "What are the recent 10 blocks?"
 - "Get blockchain stats"
 
-### 🔍 General Search
-- "Search for anything blockchain related"
+### 🔍 General Search & ENS Resolution
+- **"Search for vitalik.eth"** ← Resolves ENS names to addresses
 - "Find information about ENS"
+- "Search for anything blockchain related"
 
 ## 🔧 Available Functions
 
 The AI can automatically call these functions based on your queries:
 
-| Function                  | Description                                        |
-| ------------------------- | -------------------------------------------------- |
-| `getAddressInfo`          | Get address balance, type, and verification status |
-| `getAddressTransactions`  | Fetch recent transactions for an address           |
-| `getAddressTokenBalances` | Get all token balances for an address              |
-| `getTokenInfo`            | Get token details (name, symbol, supply, etc.)     |
-| `getTransactionInfo`      | Get detailed transaction information               |
-| `getLatestBlocks`         | Fetch recent blocks from the blockchain            |
-| `searchBlockchain`        | Search for addresses, transactions, or tokens      |
-| `getNetworkStats`         | Get overall network statistics                     |
+| Function                  | Description                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| `getAddressInfo`          | Get address balance, type, and verification status                                          |
+| `getAddressTransactions`  | Fetch recent transactions for an address                                                    |
+| `getAddressTokenBalances` | Get all token balances for an address                                                       |
+| `getTokenInfo`            | Get token details (name, symbol, supply, etc.)                                              |
+| `getTransactionInfo`      | Get detailed transaction information                                                        |
+| `getLatestBlocks`         | Fetch recent blocks from the blockchain                                                     |
+| **`searchBlockchain`**    | **🌟 Universal search: resolves ENS names, finds tokens, addresses, transactions, and more** |
+| `getNetworkStats`         | Get overall network statistics                                                              |
 
 ## 🏗️ Architecture
 
