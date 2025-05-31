@@ -640,23 +640,7 @@ async function startChat() {
             // Check for function calls
             if (response.functionCalls && response.functionCalls.length > 0) {
                 debug('Processing function calls', response.functionCalls);
-                const functionResults = [];
                 
-                for (const functionCall of response.functionCalls) {
-                    console.log(`🔧 Executing: ${functionCall.name}...`);
-                    debug(`Executing function call: ${functionCall.name}`, functionCall);
-                    
-                    const result = await executeFunction(functionCall);
-                    functionResults.push({
-                        name: functionCall.name,
-                        result: JSON.stringify(result, null, 2)
-                    });
-                    
-                    debug(`Function call ${functionCall.name} completed`);
-                }
-
-                debug('All function calls completed', { resultsCount: functionResults.length });
-
                 // Add function call to history
                 chatHistory.push({
                     role: 'model',
@@ -666,35 +650,111 @@ async function startChat() {
                 });
                 debug('Added function calls to chat history');
 
-                // Add function responses to history
-                chatHistory.push({
-                    role: 'user',
-                    parts: functionResults.map(fr => ({
-                        functionResponse: {
-                            name: fr.name,
-                            response: { result: fr.result }
-                        }
-                    }))
-                });
-                debug('Added function responses to chat history');
-
-                // Generate final response based on function results
-                debug('Generating final AI response based on function results');
-                const finalResponse = await ai.models.generateContent({
-                    model: 'gemini-2.0-flash-001',
-                    contents: chatHistory,
-                    config: {
-                        toolConfig: {
-                            functionCallingConfig: {
-                                mode: FunctionCallingConfigMode.AUTO
-                            }
-                        },
-                        tools: [{ functionDeclarations }]
+                // Process function calls and continue until we get a text response
+                let finalResponse;
+                let maxRounds = 5; // Prevent infinite loops
+                let currentRound = 0;
+                
+                while (currentRound < maxRounds) {
+                    currentRound++;
+                    debug(`Function calling round ${currentRound}`);
+                    
+                    // Get the latest function calls from the last model response
+                    const lastModelMessage = chatHistory[chatHistory.length - 1];
+                    const currentFunctionCalls = lastModelMessage.parts
+                        .filter((part: any) => part.functionCall)
+                        .map((part: any) => part.functionCall);
+                    
+                    if (currentFunctionCalls.length === 0) {
+                        debug('No more function calls to process');
+                        break;
                     }
-                });
+                    
+                    // Execute all function calls
+                    const functionResults = [];
+                    for (const functionCall of currentFunctionCalls) {
+                        console.log(`🔧 Executing: ${functionCall.name}...`);
+                        debug(`Executing function call: ${functionCall.name}`, functionCall);
+                        
+                        const result = await executeFunction(functionCall);
+                        functionResults.push({
+                            name: functionCall.name,
+                            result: JSON.stringify(result, null, 2)
+                        });
+                        
+                        debug(`Function call ${functionCall.name} completed`);
+                    }
 
-                assistantMessage = finalResponse.text || 'No response generated';
-                debug('Final AI response generated', { hasText: !!finalResponse.text });
+                    debug(`Round ${currentRound} function calls completed`, { resultsCount: functionResults.length });
+
+                    // Add function responses to history
+                    chatHistory.push({
+                        role: 'user',
+                        parts: functionResults.map(fr => ({
+                            functionResponse: {
+                                name: fr.name,
+                                response: { result: fr.result }
+                            }
+                        }))
+                    });
+                    debug(`Added function responses to chat history for round ${currentRound}`);
+
+                    // Generate next response
+                    debug(`Generating AI response for round ${currentRound}`);
+                    finalResponse = await ai.models.generateContent({
+                        model: 'gemini-2.0-flash-001',
+                        contents: chatHistory,
+                        config: {
+                            toolConfig: {
+                                functionCallingConfig: {
+                                    mode: FunctionCallingConfigMode.AUTO
+                                }
+                            },
+                            tools: [{ functionDeclarations }]
+                        }
+                    });
+
+                    debug(`Round ${currentRound} AI response received`, { 
+                        hasFunctionCalls: !!(finalResponse.functionCalls && finalResponse.functionCalls.length > 0),
+                        functionCallsCount: finalResponse.functionCalls?.length || 0,
+                        hasText: !!finalResponse.text
+                    });
+
+                    // If we have text response, we're done
+                    if (finalResponse.text) {
+                        debug(`Got final text response in round ${currentRound}`);
+                        assistantMessage = finalResponse.text;
+                        break;
+                    }
+                    
+                    // If we have more function calls, add them to history and continue
+                    if (finalResponse.functionCalls && finalResponse.functionCalls.length > 0) {
+                        debug(`Round ${currentRound} has more function calls, continuing...`);
+                        chatHistory.push({
+                            role: 'model',
+                            parts: finalResponse.functionCalls.map((fc: any) => ({
+                                functionCall: fc
+                            }))
+                        });
+                    } else {
+                        debug(`Round ${currentRound} has no text and no function calls, stopping`);
+                        assistantMessage = 'I processed your request but couldn\'t generate a response.';
+                        break;
+                    }
+                }
+                
+                if (currentRound >= maxRounds) {
+                    debug(`Reached maximum function calling rounds (${maxRounds})`);
+                    assistantMessage = 'I processed your request but it required too many steps to complete.';
+                } else if (!assistantMessage) {
+                    assistantMessage = finalResponse?.text || 'No response generated';
+                }
+                
+                debug('Function calling sequence completed', { 
+                    rounds: currentRound, 
+                    hasAssistantMessage: !!assistantMessage 
+                });
+                
             } else {
                 assistantMessage = response.text || 'No response generated';
                 debug('Direct AI response (no function calls)', { hasText: !!response.text });
