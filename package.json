@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "api-schema": "openapi-typescript https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml --output ./src/api/schema.gen.ts"
+    "api-schema": "openapi-typescript https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml --output ./src/api/schema.gen.ts",
+    "chat": "bun run src/cli.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
