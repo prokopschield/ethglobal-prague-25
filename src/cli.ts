@@ -383,59 +383,105 @@ async function searchBlockchain(query: string) {
         const results = data.items || [];
         debug(`Processing ${results.length} search results`);
         
+        // Limit results to avoid overwhelming responses (max 10 results)
+        const limitedResults = results.slice(0, 10);
+        debug(`Limited to ${limitedResults.length} results for processing`);
+        
         // Process and enhance search results
-        const processedResults = results.map((item: any) => {
+        const processedResults = limitedResults.map((item: any) => {
             debug('Processing search result item', item);
             
             const result: any = {
                 type: item.type,
-                name: item.name || 'Unknown'
+                name: item.name || 'Unknown',
+                priority: item.priority || 0
             };
             
             // Handle different types of search results
-            if (item.type === 'address' && item.address) {
-                result.address = item.address;
-                result.isContract = item.is_smart_contract_verified;
-                result.url = item.address_url;
-                // If this was an ENS search, this is the resolved address
-                if (query.endsWith('.eth')) {
-                    result.ensResolution = `${query} resolves to ${item.address}`;
-                    debug(`ENS resolution found: ${query} -> ${item.address}`);
+            if (item.type === 'address') {
+                result.address = item.address_hash || item.address;
+                result.isContract = item.is_smart_contract_verified || false;
+                result.url = item.url || item.address_url;
+                result.certified = item.certified || false;
+                
+                // Check for ENS info
+                if (item.ens_info) {
+                    result.ensName = item.ens_info.name;
+                    result.ensNamesCount = item.ens_info.names_count;
                 }
-            } else if (item.type === 'token' && item.address) {
-                result.address = item.address;
+                
+            } else if (item.type === 'ens_domain') {
+                result.address = item.address_hash || item.address;
+                result.ensName = item.ens_info?.name;
+                result.isContract = item.is_smart_contract_verified || false;
+                result.url = item.url || item.address_url;
+                
+                // For ENS lookups, this is the resolved address
+                if (query.endsWith('.eth')) {
+                    result.ensResolution = `${query} resolves to ${item.address_hash || item.address}`;
+                    debug(`ENS resolution found: ${query} -> ${item.address_hash || item.address}`);
+                }
+                
+            } else if (item.type === 'token') {
+                result.address = item.address_hash || item.address;
                 result.symbol = item.symbol;
                 result.tokenType = item.token_type;
                 result.url = item.token_url;
-            } else if (item.type === 'transaction' && item.tx_hash) {
-                result.hash = item.tx_hash;
+                result.totalSupply = item.total_supply;
+                result.isVerified = item.is_smart_contract_verified || false;
+                result.isVerifiedAdmin = item.is_verified_via_admin_panel || false;
+                result.certified = item.certified || false;
+                
+                // Market data if available
+                if (item.circulating_market_cap) {
+                    result.marketCap = item.circulating_market_cap;
+                }
+                if (item.exchange_rate) {
+                    result.price = item.exchange_rate;
+                }
+                if (item.icon_url) {
+                    result.iconUrl = item.icon_url;
+                }
+                
+            } else if (item.type === 'transaction') {
+                result.hash = item.transaction_hash || item.tx_hash;
                 result.url = item.url;
-            } else if (item.type === 'block' && item.block_number) {
+                result.timestamp = item.timestamp;
+                
+            } else if (item.type === 'block') {
                 result.blockNumber = item.block_number;
+                result.blockHash = item.block_hash;
                 result.url = item.url;
+                result.timestamp = item.timestamp;
+                result.blockType = item.block_type;
             }
             
             debug('Processed search result', result);
             return result;
         });
         
-        // Find resolved address for ENS lookups
-        const firstAddressResult = results.find((item: any) => item.type === 'address' && (item as any).address);
-        const resolvedAddress = firstAddressResult && query.endsWith('.eth') ? (firstAddressResult as any).address : null;
-        
-        debug('ENS resolution check', { 
-            query, 
-            endsWithEth: query.endsWith('.eth'),
-            firstAddressResult: firstAddressResult ? 'found' : 'not found',
-            resolvedAddress 
-        });
+        // Find resolved address for ENS lookups - check both ens_domain and address types
+        let resolvedAddress = null;
+        if (query.endsWith('.eth')) {
+            const ensResult = limitedResults.find((item: any) => 
+                (item.type === 'ens_domain' || item.type === 'address') && 
+                ((item as any).address_hash || (item as any).address)
+            );
+            if (ensResult) {
+                resolvedAddress = (ensResult as any).address_hash || (ensResult as any).address;
+                debug(`ENS resolution found: ${query} -> ${resolvedAddress}`);
+            }
+        }
         
         const finalResult = {
             query,
             resultsCount: results.length,
+            displayedResults: processedResults.length,
             results: processedResults,
             // Provide a direct address if this was an ENS lookup
-            resolvedAddress
+            resolvedAddress,
+            // Indicate if results were truncated
+            truncated: results.length > 10
         };
         
         debug('Final search result', finalResult);
