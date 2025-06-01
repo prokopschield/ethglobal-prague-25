@@ -22,6 +22,7 @@ Built for **ETH Prague 2025** hackathon using Blockscout's API and Google's late
 ### Installation
 
 1. **Clone and install dependencies:**
+
    ```bash
    git clone <your-repo>
    cd eth-prague-25
@@ -29,11 +30,13 @@ Built for **ETH Prague 2025** hackathon using Blockscout's API and Google's late
    ```
 
 2. **Set up your API key:**
+
    ```bash
    export GEMINI_API_KEY="your-api-key-here"
    ```
-   
+
    Or create a `.env` file:
+
    ```bash
    echo "GEMINI_API_KEY=your-api-key-here" > .env
    ```
@@ -52,6 +55,7 @@ DEBUG=true bun run chat
 ```
 
 This will show detailed logs of:
+
 - API calls and responses
 - Function executions
 - AI processing steps
@@ -63,26 +67,31 @@ This will show detailed logs of:
 Once the chatbot starts, you can ask questions like:
 
 ### 🏦 Address Queries
+
 - **"What's the balance of vitalik.eth?"** ← Now works with ENS names!
 - "Show me info about 0x1234567890123456789012345678901234567890"
 - "Get token balances for vitalik.eth"
 
-### 📝 Transaction Queries  
+### 📝 Transaction Queries
+
 - "Show me recent transactions for vitalik.eth"
 - "What happened in transaction 0xabcd...?"
 - "Get details for tx 0x1234567890123456789012345678901234567890123456789012345678901234"
 
 ### 🪙 Token Information
+
 - "Tell me about USDC token"
 - "Search for Chainlink token"
 - "What's the info for token contract 0xA0b86a33E6417efF8BC19FdDa0C19Bb82E9d5b6"
 
 ### 📦 Block Data
+
 - "Show me the latest blocks"
 - "What are the recent 10 blocks?"
 - "Get blockchain stats"
 
 ### 🔍 General Search & ENS Resolution
+
 - **"Search for vitalik.eth"** ← Resolves ENS names to addresses
 - "Find information about ENS"
 - "Search for anything blockchain related"
@@ -91,16 +100,16 @@ Once the chatbot starts, you can ask questions like:
 
 The AI can automatically call these functions based on your queries:
 
-| Function                  | Description                                                                                 |
-| ------------------------- | ------------------------------------------------------------------------------------------- |
-| `getAddressInfo`          | Get address balance, type, and verification status                                          |
-| `getAddressTransactions`  | Fetch recent transactions for an address                                                    |
-| `getAddressTokenBalances` | Get all token balances for an address                                                       |
-| `getTokenInfo`            | Get token details (name, symbol, supply, etc.)                                              |
-| `getTransactionInfo`      | Get detailed transaction information                                                        |
-| `getLatestBlocks`         | Fetch recent blocks from the blockchain                                                     |
+| Function                  | Description                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| `getAddressInfo`          | Get address balance, type, and verification status                                           |
+| `getAddressTransactions`  | Fetch recent transactions for an address                                                     |
+| `getAddressTokenBalances` | Get all token balances for an address                                                        |
+| `getTokenInfo`            | Get token details (name, symbol, supply, etc.)                                               |
+| `getTransactionInfo`      | Get detailed transaction information                                                         |
+| `getLatestBlocks`         | Fetch recent blocks from the blockchain                                                      |
 | **`searchBlockchain`**    | **🌟 Universal search: resolves ENS names, finds tokens, addresses, transactions, and more** |
-| `getNetworkStats`         | Get overall network statistics                                                              |
+| `getNetworkStats`         | Get overall network statistics                                                               |
 
 ## 🏗️ Architecture
 
@@ -137,16 +146,19 @@ This project integrates **Blockscout** (one of ETH Prague 2025's sponsors) by:
 ## 🔄 Development
 
 ### Regenerate API Types
+
 ```bash
 bun run api-schema
 ```
 
 ### Add New Functions
+
 1. Add function declaration in `src/cli.ts`
 2. Implement the function using `useApi`
 3. Add it to the `executeFunction` switch statement
 
 ### Environment Variables
+
 - `GEMINI_API_KEY` - Your Google AI Studio API key (required)
 
 ## 🤝 Contributing
