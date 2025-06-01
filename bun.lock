@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "eth-prague-25",
+      "name": "ethglobal-prague-25",
       "dependencies": {
         "@google/genai": "^1.3.0",
         "openapi-hooks": "^0.0.6",

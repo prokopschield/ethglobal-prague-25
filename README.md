@@ -2,7 +2,7 @@
 
 A CLI AI assistant powered by **Gemini 2.0** and **Blockscout** that lets you query Ethereum blockchain data using natural language!
 
-Built for **ETH Prague 2025** hackathon using Blockscout's API and Google's latest Gemini 2.0 with function calling.
+Built for **ETHGlobal Prague 2025** hackathon using Blockscout's API and Google's latest Gemini 2.0 with function calling.
 
 ## ✨ Features
 
@@ -24,8 +24,8 @@ Built for **ETH Prague 2025** hackathon using Blockscout's API and Google's late
 1. **Clone and install dependencies:**
 
    ```bash
-   git clone <your-repo>
-   cd eth-prague-25
+   git clone git@github.com:svemat01/ethglobal-prague-25.git
+   cd ethglobal-prague-25
    bun install
    ```
 
@@ -136,7 +136,7 @@ The AI can automatically call these functions based on your queries:
 
 ## 🎯 Hackathon Integration
 
-This project integrates **Blockscout** (one of ETH Prague 2025's sponsors) by:
+This project integrates **Blockscout** (one of ETHGlobal Prague 2025's sponsors) by:
 
 1. **Using Blockscout's comprehensive API** for all blockchain data
 2. **Auto-generated TypeScript types** from Blockscout's OpenAPI spec
@@ -171,4 +171,4 @@ MIT License - See LICENSE file for details.
 
 ---
 
-**Built with ❤️ for ETH Prague 2025**
+**Built with ❤️ for ETHGlobal Prague 2025**

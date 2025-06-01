@@ -1,5 +1,5 @@
 {
-  "name": "eth-prague-25",
+  "name": "ethglobal-prague-25",
   "module": "src/index.ts",
   "type": "module",
   "private": true,

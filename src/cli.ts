@@ -155,7 +155,7 @@ const SYSTEM_PROMPT = `You are a helpful blockchain assistant for a CLI (command
 - For addresses, show both full and shortened versions when appropriate (0x1234...5678)
 
 **About the Project:**
-This is a CLI chatbot built for ETH Prague 2025 hackathon that integrates:
+This is a CLI chatbot built for ETHGlobal Prague 2025 hackathon that integrates:
 - Google Gemini 2.0 AI with function calling capabilities
 - Blockscout API for real-time Ethereum blockchain data
 - Natural language processing to make blockchain data accessible
